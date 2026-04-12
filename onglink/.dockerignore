@@ -1,0 +1,41 @@
+# ---- Controle de versão ----
+.git
+.gitignore
+
+# ---- Docker ----
+Dockerfile
+.dockerignore
+
+# ---- Dependências (reinstaladas no build) ----
+node_modules
+
+# ---- Output de build (gerado durante o build) ----
+.next
+/out
+/build
+coverage
+
+# ---- Variáveis de ambiente (nunca enviar para a imagem) ----
+.env
+.env.*
+!.env.example
+
+# ---- Arquivos de debug e logs ----
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ---- TypeScript incremental ----
+*.tsbuildinfo
+next-env.d.ts
+
+# ---- Ferramentas locais ----
+.DS_Store
+*.pem
+
+# ---- Pasta de imagens do backlog (não vai para produção) ----
+imgs_backlog
+
+# ---- Documentação ----
+README.md
