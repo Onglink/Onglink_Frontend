@@ -9,7 +9,8 @@
     <a href="#equipe">Equipe</a> |
     <a href="#ihc">Documentação IHC</a> |
     <a href="#sprintreview"> Sprint Reviews </a>|
-    <a href="#sprintretro"> Sprint Retrospective </a>
+    <a href="#sprintretro"> Sprint Retrospective </a>|
+    <a href="#docker"> Docker </a>
 </p>
 
 <span id="sobre">
@@ -199,4 +200,59 @@ https://fatecspgov-my.sharepoint.com/:p:/r/personal/vinicius_reis23_fatec_sp_gov
 
 <a href="#topo"> → [Voltar ao topo] </a>
 
+<span id="docker">
 
+## 🐳 Rodando com Docker
+
+### Pré-requisitos
+- [Docker](https://www.docker.com/) instalado e em execução na máquina
+
+### 1. Construir a imagem
+
+Execute o comando abaixo a partir da **raiz do repositório**:
+
+```bash
+docker build -t onglink-frontend ./onglink
+```
+
+> O build utiliza múltiplos estágios (`deps` → `builder` → `runner`), gerando uma imagem de produção leve baseada em `node:20-alpine`.
+
+### 2. Rodar o container
+
+```bash
+docker run -p 3000:3000 --name onglink-frontend onglink-frontend
+```
+
+Acesse a aplicação em: [http://localhost:3000](http://localhost:3000)
+
+### 3. Parar e remover o container
+
+```bash
+docker stop onglink-frontend
+docker rm onglink-frontend
+```
+
+---
+
+### Variáveis de ambiente
+
+O frontend usa as variáveis abaixo para se comunicar com o backend. Caso precise sobrescrever os valores padrão, utilize a flag `-e`:
+
+| Variável                | Descrição                          | Valor padrão                              |
+|-------------------------|------------------------------------|-------------------------------------------|
+| `NEXT_PUBLIC_API_URL`   | URL base da API do backend         | `https://onglink-backend.vercel.app/api`  |
+| `NEXT_PUBLIC_API_KEY`   | Chave de autenticação da API       | *(valor embutido no código)*              |
+
+**Exemplo com backend local:**
+
+```bash
+docker run -p 3000:3000 \
+  -e NEXT_PUBLIC_API_URL=http://localhost:4000/api \
+  -e NEXT_PUBLIC_API_KEY=sua-chave-aqui \
+  --name onglink-frontend \
+  onglink-frontend
+```
+
+> ⚠️ Nunca inclua arquivos `.env` na imagem Docker. Eles já estão listados no `.dockerignore`. Passe sempre as variáveis via flag `-e` ou `--env-file`.
+
+<a href="#topo"> → [Voltar ao topo] </a>
