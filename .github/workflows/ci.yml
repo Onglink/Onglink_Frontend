@@ -30,6 +30,12 @@ jobs:
       - name: Testes unitarios
         run: npm test  
 
+      # ==========================================
+      # NOVO STEP: Validação do Dockerfile
+      # ==========================================
+      - name: Validar Build do Docker
+        run: docker build -t onglink-frontend:test .
+
       # PARTE 2 - Automação de Versão (Script original do professor)
       - name: Checkout para Git Operations
         uses: actions/checkout@v2
