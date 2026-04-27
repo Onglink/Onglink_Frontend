@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
-import planetilson3 from '@/app/img/gb3.png';
+import planetilson3 from '@/app/img/gb3.png'; 
 
 // Tipagem das mensagens
 interface Mensagem {
@@ -21,12 +21,11 @@ export default function Chatbot() {
   useEffect(() => {
     let nome = 'visitante';
     
-    // Tenta buscar o usuário no localStorage (mesmo padrão do seu Login.tsx)
+    // Tenta buscar o usuário no localStorage
     const usuarioSalvo = localStorage.getItem('usuarioLogado');
     if (usuarioSalvo) {
       try {
         const usuarioObj = JSON.parse(usuarioSalvo);
-        // Ajuste 'nome' caso a propriedade no seu banco de dados seja diferente (ex: razao_social)
         nome = usuarioObj.nome || usuarioObj.name || 'usuário';
       } catch (error) {
         console.error("Erro ao ler usuário do localStorage", error);
@@ -41,7 +40,7 @@ export default function Chatbot() {
         remetente: 'bot',
       }
     ]);
-  }, []); // Executa apenas uma vez quando o componente é montado no cliente
+  }, []);
 
   // Rolar para a última mensagem automaticamente
   useEffect(() => {
@@ -50,31 +49,62 @@ export default function Chatbot() {
     }
   }, [mensagens, isOpen]);
 
-  const enviarMensagem = (e: React.FormEvent) => {
+  // Função principal de envio e comunicação com o backend
+  const enviarMensagem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputAtual.trim()) return;
 
+    // 1. Salva a mensagem do usuário na tela imediatamente
+    const textoDigitado = inputAtual;
     const novaMensagemUsuario: Mensagem = {
       id: Date.now(),
-      texto: inputAtual,
+      texto: textoDigitado,
       remetente: 'usuario',
     };
 
     setMensagens((prev) => [...prev, novaMensagemUsuario]);
-    setInputAtual('');
+    setInputAtual(''); // Limpa o campo de texto
 
-    // TODO: Integração futura com o Backend (Gemini)
-    setTimeout(() => {
-      setMensagens((prev) => [
-        ...prev,
-        {
-          id: Date.now() + 1,
-          texto: "Em breve estarei conectado ao cérebro do Onglink para te responder!",
-          remetente: 'bot',
-        },
-      ]);
-    }, 1000);
-  };
+    // 2. Prepara o histórico para mandar para o backend
+    const historicoParaEnvio = mensagens.map(m => ({
+        role: m.remetente,
+        content: m.texto
+    }));
+
+    try {
+        // 3. Faz a requisição POST para a sua rota exata do Gemini
+        const response = await fetch('http://localhost:4000/api/gemini/analisar', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                mensagem: textoDigitado, 
+                historico: historicoParaEnvio
+            }),
+        });
+
+        const data = await response.json();
+
+        if (data.sucesso) {
+             setMensagens((prev) => [
+                ...prev,
+                {
+                  id: Date.now() + 1,
+                  texto: data.resposta,
+                  remetente: 'bot',
+                },
+              ]);
+        } else {
+             console.error("Erro retornado pelo backend:", data.error);
+             setMensagens((prev) => [...prev, { id: Date.now()+1, texto: "Desculpe, tive um problema ao processar isso.", remetente: 'bot' }]);
+        } 
+
+    } catch (error) {
+        console.error("Erro na requisição fetch:", error);
+        setMensagens((prev) => [...prev, { id: Date.now()+1, texto: "Erro de conexão com o servidor.", remetente: 'bot' }]);
+    }
+  }; // Fim da função enviarMensagem (O código antigo do setTimeout que ficava aqui abaixo foi removido)
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end" style={{ position: 'fixed', bottom: '24px', right: '24px', zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
@@ -84,10 +114,10 @@ export default function Chatbot() {
         <div className="mb-4 bg-white rounded-4 shadow flex flex-col overflow-hidden transition-all duration-300" style={{ height: '450px', width: '350px', maxWidth: 'calc(100vw - 2rem)', border: '1px solid #dee2e6', borderRadius: '1rem', marginBottom: '1rem' }}>
           
           {/* Header do Bot */}
-          <div className="p-3 text-black d-flex align-items-center justify-content-between" style={{ backgroundColor: '#038c2559' /* success do bootstrap */ }}>
+          <div className="p-3 text-black d-flex align-items-center justify-content-between" style={{ backgroundColor: '#038c2559' }}>
             <div className="d-flex align-items-center gap-2" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <div className="rounded-circle d-flex align-items-center justify-content-center fw-bold" >
-                <Image src={planetilson3} alt="Logo" width="95" height="95" />
+                <Image src={planetilson3} alt="Logo" width={40} height={40} style={{ borderRadius: '50%' }} />
               </div>
               <h6 className="m-0 fw-bold">Assistente Onglink</h6>
             </div>
