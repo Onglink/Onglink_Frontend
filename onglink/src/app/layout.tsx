@@ -11,6 +11,7 @@ import logo_facebook from '@/app/img/icons/social_12942738.png'
 import Link from "next/link";
 import Footer from '@/app/components/Footer';
 //import Header from "@src/app/components/header_cadastro";
+import Chatbot from "./components/Chatbot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,6 +42,7 @@ export default function RootLayout({
         {children}
 
       <Footer />
+       <Chatbot />
       </body>
       
       
