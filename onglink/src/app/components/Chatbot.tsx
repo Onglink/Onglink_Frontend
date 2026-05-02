@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import planetilson3 from '@/app/img/gb3.png'; 
+import api from '@/app/services/api';
 
 // Tipagem das mensagens
 interface Mensagem {
@@ -73,18 +74,12 @@ export default function Chatbot() {
 
     try {
         // 3. Faz a requisição POST para a sua rota exata do Gemini
-        const response = await fetch('http://localhost:4000/api/gemini/analisar', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                mensagem: textoDigitado, 
-                historico: historicoParaEnvio
-            }),
+        const response = await api.post('/gemini/analisar', {
+            mensagem: textoDigitado, 
+            historico: historicoParaEnvio
         });
 
-        const data = await response.json();
+        const data = response.data;
 
         if (data.sucesso) {
              setMensagens((prev) => [
