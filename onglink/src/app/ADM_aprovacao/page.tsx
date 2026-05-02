@@ -13,6 +13,7 @@ import { ApprovalTableRow } from '../components/tabela_adm/ApprovalTableRow';
 import { ImageModal } from '@/app/components/tabela_adm/ImageModal';
 import { FileModal } from '@/app/components/tabela_adm/FileModal';
 import { ApprovalModal } from '@/app/components/tabela_adm/ApprovalModal';
+import ongService from "@/app/services/ongService";
 
 export default function ADM_aprovacao() {
     const [products, setProducts] = useState<ICadastro[]>([]);
@@ -24,9 +25,13 @@ export default function ADM_aprovacao() {
 
     useEffect(() => {
         const listProducts = async() => {
-            const response = await axios.get("http://localhost/aprovacao");
-            setProducts(response.data);
-            console.log(response.data);
+            try {
+                const data = await ongService.listarAprovacoes();
+                setProducts(data);
+                console.log(data);
+            } catch (error) {
+                console.error("Erro ao buscar aprovações:", error);
+            }
         }
         listProducts();
     }, []);

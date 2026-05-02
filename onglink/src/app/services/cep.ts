@@ -12,9 +12,10 @@ export type CepResponse = {
 
 export async function getCepData(cep:string) {
     
+    const baseUrl = process.env.NEXT_PUBLIC_VIACEP_URL || 'https://viacep.com.br/ws';
     return(
         await axios.get<CepResponse>(
-            `https://viacep.com.br/ws/${cep.replace("-", "")}/json`
+            `${baseUrl}/${cep.replace("-", "")}/json`
         )
     ).data;
 }
