@@ -6,5 +6,6 @@ const ongService = {
     cadastrarOng: async (data) => (await api.post('/ongs',data)).data,
     atualizarOng: async(id,data) => (await api.put(`/ongs/${id}`,data)).data,
     deletarOng: async(id) => (await api.delete(`/ongs/${id}`)).data,
+    listarAprovacoes: async () => (await api.get('/aprovacao')).data,
 };
 export default ongService;

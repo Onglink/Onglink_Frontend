@@ -1,7 +1,7 @@
 // src/app/services/uploadService.js
 
-const CLOUD_NAME = 'df48qk6bj';
-const UPLOAD_PRESET = 'onglinkCloud';
+const CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+const UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
 const uploadService = async (file) => {
     if (!file) return null;

@@ -356,6 +356,8 @@ import Header_home from "@/app/components/header_home";
 import CardsParceiros from "@/app/components/card_parceiros"; 
 // Se você usa next/navigation, mantenha a importação:
 import { useRouter } from "next/navigation";
+import parceiroService from "@/app/services/parceiroService";
+
 
 // -------------------------------------------------------------------
 // [Frontend] CONSTANTES E TIPAGEM
@@ -363,7 +365,8 @@ import { useRouter } from "next/navigation";
 
 // A URL deve ser ajustada para o seu ambiente de produção/teste se não for localhost:4000
 //const API_URL = 'http://localhost:4000/api/parceiros'; 
-const API_URL = 'https://onglink-backend.vercel.app/api/parceiros';
+// const API_URL = 'https://onglink-backend.vercel.app/api/parceiros';
+
 const ITEMS_PER_LOAD = 4; 
 
 // Lista de categorias válidas (Sem acentos para bater com o valor do DB)
@@ -457,17 +460,9 @@ export default function Parceiros() {
   // Método para buscar e agrupar os parceiros
   const fetchAndGroupParceiros = useCallback(async () => {
       try {
-        const response = await fetch(API_URL);
+        const responseJson = await parceiroService.listarParceiro();
         
-        if (!response.ok) {
-            // Se o status for 403 (Forbidden), pode ser CORS ou apiKeyAuth
-            const errorText = response.status === 403 ? 
-                'Acesso negado (403 Forbidden). Verifique as configurações de CORS/Autenticação.' : 
-                `Falha ao buscar dados da API. Status: ${response.status}`;
-            throw new Error(errorText);
-        }
-        
-        const responseJson = await response.json(); 
+        // Assume que a resposta é um array, mas adiciona fallback
         
         // Assume que a resposta é um array, mas adiciona fallback
         let rawData: any = responseJson;
