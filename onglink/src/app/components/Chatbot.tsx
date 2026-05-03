@@ -81,12 +81,12 @@ export default function Chatbot() {
 
         const data = response.data;
 
-        if (data.sucesso) {
+        if (data.success || data.sucesso) {
              setMensagens((prev) => [
                 ...prev,
                 {
                   id: Date.now() + 1,
-                  texto: data.resposta,
+                  texto: data.data || data.resposta,
                   remetente: 'bot',
                 },
               ]);
