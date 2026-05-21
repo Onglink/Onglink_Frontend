@@ -198,6 +198,6 @@ jobs:
         # uses: SonarSource/sonarCloud-github-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432
         uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432
         with:
-          projectBaseDir: .
+          projectBaseDir: ./onglink
         env:
           SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
