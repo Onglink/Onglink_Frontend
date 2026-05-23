@@ -1,5 +1,6 @@
 /// <reference types="./declarations.d.ts" />
 import type { Preview } from '@storybook/nextjs-vite'
+import 'bootstrap/dist/css/bootstrap.min.css'
 import '../src/app/globals.css'
 
 const preview: Preview = {
