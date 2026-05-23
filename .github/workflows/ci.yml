@@ -11,7 +11,7 @@ jobs:
     defaults:
       run:
         working-directory: ./onglink
-    
+
     steps:
       # ==========================================
       # PARTE 1 - Configuração e Testes
@@ -25,7 +25,7 @@ jobs:
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: "22"
 
       - name: Instalar dependências
         run: npm install
@@ -34,7 +34,7 @@ jobs:
         run: npm run build
 
       - name: Testes unitarios
-        run: npm test  
+        run: npm test
 
       - name: Validar Build do Docker
         run: docker build -t onglink-frontend:test .
@@ -112,24 +112,24 @@ jobs:
         run: |
           REPO_NAME="${{ github.repository }}"
           REPO_NAME="${REPO_NAME#*/}"
-          
+
           # Converte tudo para minúsculo, pois o Docker não aceita maiúsculas em tags
           REPO_NAME=$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]')
-          
+
           # Exportando o nome do repositório
           echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV 
           echo "Repositório: $REPO_NAME"
-      
+
       - name: Verificar e criar repositório no Docker Hub (se necessário)
         env:
           DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
           # Usando a secret correta validada na sua imagem:
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }} 
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
         run: |
           echo "Verificando repositório: ${{ env.REPO_NAME }}"
           RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -u $DOCKERHUB_USERNAME:$DOCKERHUB_TOKEN \
             "https://hub.docker.com/v2/repositories/$DOCKERHUB_USERNAME/${{ env.REPO_NAME }}/")
-          
+
           if [ "$RESPONSE" -eq 404 ]; then
             echo "Repositório não existe. Criando repositório no Docker Hub..."
             curl -s -X POST -u $DOCKERHUB_USERNAME:$DOCKERHUB_TOKEN \
@@ -144,15 +144,19 @@ jobs:
       - name: Criar imagem docker
         run: |
           echo "Iniciando build da imagem Docker para o repositório ${{ env.REPO_NAME }} - Versão: ${{ env.new_version }}"
-          
+
           # Usando as variáveis exportadas corretamente
-          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }} .
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=http://localhost:4000/api \
+            --build-arg NEXT_PUBLIC_API_KEY=${{ secrets.NEXT_PUBLIC_API_KEY }} \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }} .
+            
           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }} ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:latest
 
       - name: Efetuar push da imagem
         run: |
           echo "Fazendo push da imagem Docker para o Docker Hub ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }}" 
-          
+
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:latest
 
@@ -186,3 +190,14 @@ jobs:
           to: ${{ secrets.MAIL_DESTINO }}
           from: "${{ secrets.MAIL_DESTINO}} - Github Actions"
           body: "Ocorreu uma FALHA no build do repositorio ${{ github.repository }}! Verifique o log do Github Actions para corrigir o erro."
+
+      # ==========================================
+      # PARTE 5 - SONAR QUBE
+      # ==========================================
+      - name: SonarCloud Scan
+        # uses: SonarSource/sonarCloud-github-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432
+        uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432
+        with:
+          projectBaseDir: ./onglink
+        env:
+          SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
