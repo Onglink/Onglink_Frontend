@@ -74,19 +74,19 @@ export default function Chatbot() {
 
     try {
         // 3. Faz a requisição POST para a sua rota exata do Gemini
-        const response = await api.post('/gemini/analisar', {
+        const response = await api.post('/gemini', {
             mensagem: textoDigitado, 
             historico: historicoParaEnvio
         });
 
         const data = response.data;
 
-        if (data.sucesso) {
+        if (data.success || data.sucesso) {
              setMensagens((prev) => [
                 ...prev,
                 {
                   id: Date.now() + 1,
-                  texto: data.resposta,
+                  texto: data.data || data.resposta,
                   remetente: 'bot',
                 },
               ]);

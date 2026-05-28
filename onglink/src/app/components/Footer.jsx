@@ -15,6 +15,7 @@ import { Button, Form } from 'react-bootstrap';
 export default function Footer() {
   
     const router = useRouter();
+    const version = process.env.NEXT_PUBLIC_APP_VERSION
   
     return (
     <footer className="bg-header py-12 px-4 md:px-8" id='footer'>
@@ -78,8 +79,11 @@ export default function Footer() {
         <div id='div_Copyright' className="ml-10 font-bold">
             <p>© 2024 MUXN Company, Inc. All rights reserved.</p>
         </div>
+
+        <div className='ml-5 font-bold' >{version && <span className="version-tag">Versão: v{version}</span>}</div>
+
         <div className='w-50'></div>
-            <div className='d-flex mr-4'
+            <div className='d-flex mr-13'
             >
                 <Image src={logo_twitter}
                 alt="Logo Twitter"
