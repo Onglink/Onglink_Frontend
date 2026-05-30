@@ -192,7 +192,7 @@ jobs:
       - name: Criar e Enviar imagem Docker
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            --build-arg NEXT_PUBLIC_API_URL=http://159.65.230.141/api \
             --build-arg NEXT_PUBLIC_API_KEY=${{ secrets.NEXT_PUBLIC_API_KEY }} \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }} .
             
