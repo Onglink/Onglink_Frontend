@@ -49,6 +49,13 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Repassando as variáveis para o ambiente de execução (SSR do Next.js)
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
+ARG NEXT_PUBLIC_API_KEY
+ENV NEXT_PUBLIC_API_KEY=$NEXT_PUBLIC_API_KEY
+
 # Cria grupo e usuário não-root para segurança
 RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 nextjs

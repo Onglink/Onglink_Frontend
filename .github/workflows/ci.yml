@@ -1,26 +1,29 @@
-name: Release
+name: CI/CD Pipeline Frontend
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main # Roda a CI em PRs para a main garantindo a qualidade antes do merge
 
 jobs:
-  version:
+  # ==========================================
+  # JOB 1: CI - Integração Contínua
+  # ==========================================
+  ci:
+    name: Build, Test & Sonar
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./onglink
+        working-directory: ./onglink # Garante que os comandos npm rodem na subpasta
 
     steps:
-      # ==========================================
-      # PARTE 1 - Configuração e Testes
-      # ==========================================
       - name: Checkout do código
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GH_TOKEN }}
-          fetch-depth: 0 # Necessário buscar o histórico para calcular a versão
+          fetch-depth: 0 # Necessário para o SonarCloud
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
@@ -36,11 +39,59 @@ jobs:
       - name: Testes unitarios
         run: npm test
 
-      - name: Validar Build do Docker
-        run: docker build -t onglink-frontend:test .
+      # PARTE 5 - SONAR QUBE (Validação estática na CI)
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432
+        with:
+          projectBaseDir: ./onglink
+        env:
+          SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+
+      # PARTE 3 - Notificação de Erro na CI
+      - name: Send mail (Falha na CI)
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.EMAIL_ORIGEM }}
+          password: ${{ secrets.SENHA_EMAIL }}
+          subject: "Falha na CI (Build/Testes) do Frontend"
+          to: ${{ secrets.MAIL_DESTINO }}
+          from: "${{ secrets.MAIL_DESTINO}} - Github Actions"
+          body: "Ocorreu uma FALHA nos testes, build ou SonarCloud do repositorio ${{ github.repository }}! Verifique os logs do GitHub Actions."
+
+  # ==========================================
+  # JOB 2: CD - Release e Deploy
+  # ==========================================
+  cd:
+    name: Version, Docker & Deploy
+    runs-on: ubuntu-latest
+    needs: ci # Só inicia se a CI passar
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    defaults:
+      run:
+        working-directory: ./onglink
+    
+    env:
+      new_version: ''
+      REPO_NAME: ''
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+          fetch-depth: 0
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
 
       # ==========================================
-      # PARTE 2 - Automação de Versão
+      # PARTE 2 - Automação de Versão (Semver)
       # ==========================================
       - name: Instalar semver
         run: npm install -g semver
@@ -62,8 +113,7 @@ jobs:
         run: |
           git fetch --tags
           LAST_TAG=$(git describe --tags `git rev-list --tags --max-count=1` 2>/dev/null || echo "v0.0.0")
-          echo "Versão Atual: $LAST_TAG"
-
+          
           if [ "$LAST_TAG" = "v0.0.0" ]; then
             COMMITS=$(git log --pretty=format:"%s")
           else
@@ -92,77 +142,8 @@ jobs:
             NEW_VERSION=$(semver -i patch $CURRENT_VERSION)
           fi
 
-          echo "Nova versão calculada: $NEW_VERSION"
-          # Exportando para o GITHUB_ENV para ser usado nos próximos steps
           echo "new_version=$NEW_VERSION" >> $GITHUB_ENV
 
-      # ==========================================
-      # PARTE 3 - Integração Docker Hub
-      # ==========================================
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login DockerHub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Definir o nome do repositório
-        run: |
-          REPO_NAME="${{ github.repository }}"
-          REPO_NAME="${REPO_NAME#*/}"
-
-          # Converte tudo para minúsculo, pois o Docker não aceita maiúsculas em tags
-          REPO_NAME=$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]')
-
-          # Exportando o nome do repositório
-          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV 
-          echo "Repositório: $REPO_NAME"
-
-      - name: Verificar e criar repositório no Docker Hub (se necessário)
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          # Usando a secret correta validada na sua imagem:
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
-        run: |
-          echo "Verificando repositório: ${{ env.REPO_NAME }}"
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -u $DOCKERHUB_USERNAME:$DOCKERHUB_TOKEN \
-            "https://hub.docker.com/v2/repositories/$DOCKERHUB_USERNAME/${{ env.REPO_NAME }}/")
-
-          if [ "$RESPONSE" -eq 404 ]; then
-            echo "Repositório não existe. Criando repositório no Docker Hub..."
-            curl -s -X POST -u $DOCKERHUB_USERNAME:$DOCKERHUB_TOKEN \
-              -H "Content-Type: application/json" \
-              -d '{"name": "${{ env.REPO_NAME }}", "is_private": true}' \
-              "https://hub.docker.com/v2/repositories/$DOCKERHUB_USERNAME/"
-            echo "Repositório ${{ env.REPO_NAME }} criado com sucesso!"
-          else
-            echo "Repositório ${{ env.REPO_NAME }} já existe no Docker Hub."
-          fi
-
-      - name: Criar imagem docker
-        run: |
-          echo "Iniciando build da imagem Docker para o repositório ${{ env.REPO_NAME }} - Versão: ${{ env.new_version }}"
-
-          # Usando as variáveis exportadas corretamente
-          docker build \
-            --build-arg NEXT_PUBLIC_API_URL=http://localhost:4000/api \
-            --build-arg NEXT_PUBLIC_API_KEY=${{ secrets.NEXT_PUBLIC_API_KEY }} \
-            -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }} .
-            
-          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }} ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:latest
-
-      - name: Efetuar push da imagem
-        run: |
-          echo "Fazendo push da imagem Docker para o Docker Hub ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }}" 
-
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }}
-          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:latest
-
-      # ==========================================
-      # PARTE 4 - Atualização Git e Notificações
-      # ==========================================
       - name: Atualizar versão no package.json
         run: npm version ${{ env.new_version }} --no-git-tag-version
 
@@ -177,7 +158,66 @@ jobs:
           git tag v${{ env.new_version }}
           git push origin main --tags
 
-      - name: Send mail
+      # ==========================================
+      # PARTE 3 - Integração Docker Hub
+      # ==========================================
+      - name: Definir o nome do repositório
+        run: |
+          REPO_NAME="${{ github.repository }}"
+          REPO_NAME="${REPO_NAME#*/}"
+          REPO_NAME=$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]')
+          echo "REPO_NAME=$REPO_NAME" >> $GITHUB_ENV 
+
+      - name: Verificar e criar repositório no Docker Hub (se necessário)
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -u $DOCKERHUB_USERNAME:$DOCKERHUB_TOKEN \
+            "https://hub.docker.com/v2/repositories/$DOCKERHUB_USERNAME/${{ env.REPO_NAME }}/")
+
+          if [ "$RESPONSE" -eq 404 ]; then
+            curl -s -X POST -u $DOCKERHUB_USERNAME:$DOCKERHUB_TOKEN \
+              -H "Content-Type: application/json" \
+              -d '{"name": "${{ env.REPO_NAME }}", "is_private": true}' \
+              "https://hub.docker.com/v2/repositories/$DOCKERHUB_USERNAME/"
+          fi
+
+      - name: Login DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Criar e Enviar imagem Docker
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }} \
+            --build-arg NEXT_PUBLIC_API_KEY=${{ secrets.NEXT_PUBLIC_API_KEY }} \
+            -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }} .
+            
+          docker tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }} ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:latest
+
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }}
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:latest
+
+      # ==========================================
+      # PARTE 6 - Deploy no Render (Webhook)
+      # ==========================================
+      - name: Disparar Deploy Automático no Render
+        if: success()
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+          IMAGE_TAG: ${{ env.new_version }}
+        run: |
+          # A URL deve ter os / e : convertidos para o formato URL-encoded (%2F e %3A)
+          ENCODED_IMAGE="docker.io%2F${{ secrets.DOCKERHUB_USERNAME }}%2F${{ env.REPO_NAME }}%3A${IMAGE_TAG}"
+          
+          # Dispara o webhook enviando explicitamente a versão recém-criada
+          curl "${DEPLOY_HOOK}&imgURL=${ENCODED_IMAGE}"
+
+      # Notificação de Erro na CD
+      - name: Send mail (Falha na CD)
         if: failure()
         uses: dawidd6/action-send-mail@v3
         with:
@@ -186,18 +226,7 @@ jobs:
           secure: true
           username: ${{ secrets.EMAIL_ORIGEM }}
           password: ${{ secrets.SENHA_EMAIL }}
-          subject: "Falha no workflow do GitHub Actions"
+          subject: "Falha na CD (Release/Deploy) do Frontend"
           to: ${{ secrets.MAIL_DESTINO }}
           from: "${{ secrets.MAIL_DESTINO}} - Github Actions"
-          body: "Ocorreu uma FALHA no build do repositorio ${{ github.repository }}! Verifique o log do Github Actions para corrigir o erro."
-
-      # ==========================================
-      # PARTE 5 - SONAR QUBE
-      # ==========================================
-      - name: SonarCloud Scan
-        # uses: SonarSource/sonarCloud-github-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432
-        uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432
-        with:
-          projectBaseDir: ./onglink
-        env:
-          SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
+          body: "A CI passou, mas ocorreu uma FALHA na geração da Release, envio do Docker ou Webhook do Render no repositório ${{ github.repository }}! Verifique o log."
