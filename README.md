@@ -20,10 +20,15 @@
 
 O nosso Projeto Interdisciplinar, Onglink, trata-se de uma plataforma cujo principal objetivo é facilitar e otimizar a divulgação de ONGs. Nela, os usuários poderão criar seu próprio perfil para sua organização, as ONGs poderão publicar suas atividades e campanhas sociais, e os usuários e visitantes poderão acompanhar o desenvolvimento dessas ONGs através de suas publicações, também terão em mãos ferramentas de busca de ONGs e poderão acessar o perfil da ONG escolhida para ter mais acesso a informações de contato. Nesse semestre nosso objetivo foi melhorar a nossa interface, aplicando técnicas de acessibilidade para os usuários e criamos o back-end, tornando a aplicação funcional.
 
-## Link para Acesso à Aplicação
+## Links para Acesso à Aplicação
 
- Homologação → <a href="https://onglink-frontend-hml.onrender.com" > https://onglink-frontend-hml.onrender.com </a>
- Produção → <a href="http://159.65.230.141"> http://159.65.230.141 </a>
+ Produção (DigitalOcean) → <a href="http://159.65.230.141"> http://159.65.230.141 </a>
+ <br>
+ Homologação (Render) → <a href="https://onglink-frontend-hml.onrender.com" > https://onglink-frontend-hml.onrender.com </a>
+
+ ## Repositório Frontend no DockerHub
+
+<a href="https://hub.docker.com/repository/docker/onglink/onglink_frontend"> https://hub.docker.com/repository/docker/onglink/onglink_frontend </a>
 
 <br>
 
@@ -202,6 +207,7 @@ https://fatecspgov-my.sharepoint.com/:p:/r/personal/vinicius_reis23_fatec_sp_gov
 <a href="#topo"> → [Voltar ao topo] </a>
 
 <span id="docker">
+
 
 ## 🐳 Rodando com Docker
 
