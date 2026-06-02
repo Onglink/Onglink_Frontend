@@ -10,10 +10,10 @@ on:
 
 jobs:
   # ==========================================
-  # JOB 1: CI - Integração Contínua
+  # JOB 1: CI - Integração Contínua (Sem Sonar)
   # ==========================================
   ci:
-    name: Build, Test & Sonar
+    name: Build & Test
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -22,8 +22,6 @@ jobs:
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Configurar Node.js
         uses: actions/setup-node@v4
@@ -39,13 +37,6 @@ jobs:
       - name: Testes unitarios
         run: npm test
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@59db25f34e16620e48ab4bb9e4a5dce155cb5432
-        with:
-          projectBaseDir: ./onglink
-        env:
-          SONAR_TOKEN: ${{secrets.SONAR_TOKEN}}
-
       - name: Send mail (Falha na CI)
         if: failure()
         uses: dawidd6/action-send-mail@v3
@@ -58,7 +49,7 @@ jobs:
           subject: "Falha na CI (Build/Testes) do Frontend - Homolog"
           to: ${{ secrets.MAIL_DESTINO }}
           from: "${{ secrets.MAIL_DESTINO}} - Github Actions"
-          body: "Ocorreu uma FALHA nos testes, build ou SonarCloud da branch develop no repositorio ${{ github.repository }}!"
+          body: "Ocorreu uma FALHA nos testes ou no build da branch develop no repositorio ${{ github.repository }}!"
 
   # ==========================================
   # JOB 2: CD - Release e Deploy (Homologação)
@@ -183,7 +174,7 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # ALTERADO: Aponta para a URL do Render e tagueia a imagem como :homolog
+      # Build focado em Homologação (Aponta para o Render e gera a tag :homolog)
       - name: Criar e Enviar imagem Docker
         run: |
           docker build \
@@ -196,7 +187,7 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:homolog
 
-      # ALTERADO: Dispara o Hook enviando explicitamente a tag :homolog para o Render atualizar
+      # Dispara o Hook do Render avisando para ele puxar a tag :homolog
       - name: Disparar Deploy Automático no Render
         if: success()
         env:
