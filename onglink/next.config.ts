@@ -26,7 +26,7 @@ const nextConfig: NextConfig = {
         // Interceta todas as chamadas que o front faz para /api/...
         source: '/api/:path*',
         // Encaminha silenciosamente para o backend HTTP no IP público
-        destination: 'http://163.176.72.142:4000/api/:path*',
+        destination: 'http://163.176.72.142:4000/:path*',
       },
     ];
   },
