@@ -1,13 +1,15 @@
 'use client';
 import React from 'react';
-import FormInput from "@/app/components/formulario/FormInput";
+import FormInput, { MaskType } from "@/app/components/formulario/FormInput";
 
-interface FieldConfig {
+export interface FieldConfig {
   name: string;
   label: string;
-  placeholder?: string,
+  placeholder?: string;
   width?: string; // largura flexível (ex: "w-1/3", "flex-1", "w-1/2")
-  readonly?:boolean;
+  readonly?: boolean;
+  mask?: MaskType;
+  maxLength?: number;
 }
 
 interface FormGroupProps {
@@ -26,6 +28,8 @@ const FormGroup: React.FC<FormGroupProps> = ({ formik, fields }) => {
             label={field.label}
             placeholder={field.placeholder}
             readonly={field.readonly}
+            mask={field.mask}
+            maxLength={field.maxLength}
           />
         </div>
       ))}
