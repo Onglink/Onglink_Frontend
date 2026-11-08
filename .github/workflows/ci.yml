@@ -192,8 +192,10 @@ jobs:
       - name: Criar e Enviar imagem Docker
         run: |
           docker build \
-            --build-arg NEXT_PUBLIC_API_URL=http://159.65.230.141/api \
+            --build-arg NEXT_PUBLIC_API_URL=/api \
             --build-arg NEXT_PUBLIC_API_KEY=${{ secrets.NEXT_PUBLIC_API_KEY }} \
+            --build-arg NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }} \
+            --build-arg NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET }} \
             -t ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }} .
             
           docker tag ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }} ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:latest
@@ -201,20 +203,20 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:${{ env.new_version }}
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REPO_NAME }}:latest
 
+     # ==========================================
+      # PARTE 6 - Deploy Automático na Oracle Cloud
       # ==========================================
-      # PARTE 6 - Deploy no Render (Webhook)
-      # ==========================================
-      - name: Disparar Deploy Automático no Render
+      - name: Disparar Deploy na Oracle Cloud (SSH)
         if: success()
-        env:
-          DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
-          IMAGE_TAG: ${{ env.new_version }}
-        run: |
-          # A URL deve ter os / e : convertidos para o formato URL-encoded (%2F e %3A)
-          ENCODED_IMAGE="docker.io%2F${{ secrets.DOCKERHUB_USERNAME }}%2F${{ env.REPO_NAME }}%3A${IMAGE_TAG}"
-          
-          # Dispara o webhook enviando explicitamente a versão recém-criada
-          curl "${DEPLOY_HOOK}&imgURL=${ENCODED_IMAGE}"
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_HOST }}
+          username: ubuntu
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          script: |
+            cd ~/Onglink_Backend
+            /usr/local/bin/docker-compose pull frontend
+            /usr/local/bin/docker-compose up -d --no-deps frontend
 
       # Notificação de Erro na CD
       - name: Send mail (Falha na CD)
@@ -228,5 +230,5 @@ jobs:
           password: ${{ secrets.SENHA_EMAIL }}
           subject: "Falha na CD (Release/Deploy) do Frontend"
           to: ${{ secrets.MAIL_DESTINO }}
-          from: "${{ secrets.MAIL_DESTINO}} - Github Actions"
-          body: "A CI passou, mas ocorreu uma FALHA na geração da Release, envio do Docker ou Webhook do Render no repositório ${{ github.repository }}! Verifique o log."
+          from: "${{ secrets.MAIL_DESTINO}} Github Actions"
+          body: "A CI passou, mas ocorreu uma FALHA na geração da Release, envio do Docker ou Deploy na Oracle no repositório ${{ github.repository }}! Verifique o log."
