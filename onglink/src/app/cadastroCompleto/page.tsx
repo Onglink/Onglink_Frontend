@@ -473,15 +473,38 @@ const CadastroCompleto: React.FC = () => {
     },
     validationSchema: Yup.object({
       razaoSocial: Yup.string().required("Razão Social é obrigatória"),
-      cnpj: Yup.string().required("CNPJ é obrigatório"),
+      cnpj: Yup.string()
+        .test("cnpj-valido", "CNPJ inválido (deve ter 14 dígitos)", (val) => {
+          if (!val) return false;
+          return val.replace(/\D/g, "").length === 14;
+        })
+        .required("CNPJ é obrigatório"),
       email: Yup.string()
         .email("Email inválido")
         .required("Email é obrigatório"),
       pessoaResponsavel: Yup.string().required(
         "Pessoa responsável é obrigatória"
       ),
-      cpf: Yup.string().required("CPF é obrigatório"),
-      telefone01: Yup.string().required("Telefone é obrigatório"),
+      cpf: Yup.string()
+        .test("cpf-valido", "CPF inválido (deve ter 11 dígitos)", (val) => {
+          if (!val) return false;
+          return val.replace(/\D/g, "").length === 11;
+        })
+        .required("CPF é obrigatório"),
+      telefone01: Yup.string()
+        .test("telefone-valido", "Telefone inválido (mínimo 10 dígitos)", (val) => {
+          if (!val) return false;
+          const len = val.replace(/\D/g, "").length;
+          return len === 10 || len === 11;
+        })
+        .required("Telefone é obrigatório"),
+      telefone02: Yup.string()
+        .nullable()
+        .test("telefone2-valido", "Telefone secundário inválido", (val) => {
+          if (!val || val.trim() === "") return true;
+          const len = val.replace(/\D/g, "").length;
+          return len === 10 || len === 11;
+        }),
       causaSocial: Yup.string().required("Causa social é obrigatória"),
       sobreOng: Yup.string().required("Sobre a ONG é obrigatória"),
     }),
@@ -500,7 +523,12 @@ const CadastroCompleto: React.FC = () => {
       estado: "",
     },
     validationSchema: Yup.object({
-      cep: Yup.string().required("CEP é obrigatório"),
+      cep: Yup.string()
+        .test("cep-valido", "CEP inválido (deve ter 8 dígitos)", (val) => {
+          if (!val) return false;
+          return val.replace(/\D/g, "").length === 8;
+        })
+        .required("CEP é obrigatório"),
       endereco: Yup.string().required("Endereço é obrigatório"),
       numero: Yup.string().required("Número é obrigatório"),
       bairro: Yup.string().required("Bairro é obrigatório"),
@@ -653,7 +681,13 @@ const CadastroCompleto: React.FC = () => {
             <FormGroup
               formik={formikBasico}
               fields={[
-                { name: "cnpj", label: "CNPJ", width: "w-1/2" },
+                {
+                  name: "cnpj",
+                  label: "CNPJ",
+                  placeholder: "00.000.000/0000-00",
+                  mask: "cnpj",
+                  width: "w-1/2",
+                },
                 { name: "email", label: "Email", width: "w-1/2" },
               ]}
             />
@@ -665,14 +699,32 @@ const CadastroCompleto: React.FC = () => {
                   label: "Pessoa Responsável",
                   width: "w-1/2",
                 },
-                { name: "cpf", label: "CPF", width: "w-1/2" },
+                {
+                  name: "cpf",
+                  label: "CPF",
+                  placeholder: "000.000.000-00",
+                  mask: "cpf",
+                  width: "w-1/2",
+                },
               ]}
             />
             <FormGroup
               formik={formikBasico}
               fields={[
-                { name: "telefone01", label: "Telefone 01", width: "w-1/2" },
-                { name: "telefone02", label: "Telefone 02", width: "w-1/2" },
+                {
+                  name: "telefone01",
+                  label: "Telefone 01",
+                  placeholder: "(00) 00000-0000",
+                  mask: "telefone",
+                  width: "w-1/2",
+                },
+                {
+                  name: "telefone02",
+                  label: "Telefone 02 (Opcional)",
+                  placeholder: "(00) 0000-0000",
+                  mask: "telefone",
+                  width: "w-1/2",
+                },
               ]}
             />
             <FormRadioGroup
@@ -726,6 +778,7 @@ const CadastroCompleto: React.FC = () => {
                   name: "cep",
                   label: "CEP",
                   placeholder: "00000-000",
+                  mask: "cep",
                   width: "w-1/2",
                 },
               ]}

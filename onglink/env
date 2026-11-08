@@ -1,9 +1,0 @@
-# Configurações de Conexão com o Backend (Nuvem ou Local)
-NEXT_PUBLIC_API_URL=/api
-
-# Chave de Acesso da API (cabeçalho x-api-key)
-NEXT_PUBLIC_API_KEY=fcf87fe4-7793-477d-b765-620c5cdbcf4f
-
-# Configurações de Upload no Cloudinary
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=df48qk6bj
-NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET=onglinkCloud
