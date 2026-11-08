@@ -11,7 +11,7 @@ import "@/app/CSS/home.css";
 import "@/app/CSS/cadastro.css";
 import "@/app/CSS/header_alt.css";
 import usuarioService from "@/app/services/usuarioService";
-import { IMaskInput } from "react-imask";
+import { maskCpf } from "@/app/utils/masks";
 // =====================================================================
 
 // Esquema de Validação Yup
@@ -143,15 +143,22 @@ export default function CadastroSimplesPessoaFisica() {
                       <label htmlFor="cpf" className="form-label fw-semibold">
                         CPF <span className="text-danger">*</span>
                       </label>
-                      <Field
-                        as={IMaskInput}
-                        mask="000.000.000-00"
-                        id="cpf"
-                        name="cpf"
-                        type="text"
-                        placeholder="___.___.___-__"
-                        className="form-control text-start"
-                      />
+                      <Field name="cpf">
+                        {({ field, form }: FieldProps) => (
+                          <input
+                            {...field}
+                            id="cpf"
+                            type="text"
+                            placeholder="000.000.000-00"
+                            maxLength={14}
+                            className="form-control text-start"
+                            onChange={(e) => {
+                              const masked = maskCpf(e.target.value);
+                              form.setFieldValue("cpf", masked);
+                            }}
+                          />
+                        )}
+                      </Field>
                       <ErrorMessage
                         name="cpf"
                         component="div"
