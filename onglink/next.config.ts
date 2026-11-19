@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
 
   env: {
     NEXT_PUBLIC_APP_VERSION: packageJson.version,
-    NEXT_PUBLIC_API_URL: '/api'
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api',
   },
 };
 
