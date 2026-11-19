@@ -1,403 +1,13 @@
-// //esse é o antigo
-// "use client";
-// import React, { useState } from "react";
-// import PublicarForm from "@/app/components/PublicarForm";
-// import FeedPost from "@/app/components/FeedPost";
-// //import { Row } from "react-bootstrap";
-
-// interface Post {
-//   title: string;
-//   message: string;
-//   image?: File | null;
-// }
-
-// const FeedPage: React.FC = () => {
-//   const [posts, setPosts] = useState<Post[]>([]);
-
-//   const addPost = (post: Post) => {
-//     setPosts((prevPosts) => [post, ...prevPosts]);
-//   };
-
-//   return (
-//     <div className="container-fluid col-12 vstack gap-1 p-0">
-//       <div id="componente_feedpage" className="p-3">
-//         <PublicarForm onPublish={addPost} />
-//       </div>
-
-//       <div className="mt-2" id="div_pub">
-//         {posts.length === 0 ? (
-//           <p className="text-center"></p>
-//         ) : (
-//           posts.map((post, index) => <FeedPost key={index} post={post} />)
-//         )}
-//       </div>
-
-//     </div>
-//   );
-// };
-
-// export default FeedPage;
-
-// esse é o novo como teste
-// "use client";
-// import React from "react";
-// import FeedPost from "@/app/components/FeedPost";
-
-// interface Post {
-//   title: string;
-//   message: string;
-//   image?: File | null;
-// }
-
-// interface FeedPageProps {
-//   posts: Post[];
-// }
-
-// const FeedPage: React.FC<FeedPageProps> = ({ posts }) => {
-//   return (
-//     <div className="mt-2" id="div_pub">
-//       {posts.length === 0 ? (
-//         <p className="text-center">Nenhuma publicação ainda.</p>
-//       ) : (
-//         posts.map((post, index) => <FeedPost key={index} post={post} />)
-//       )}
-//     </div>
-//   );
-// };
-
-// export default FeedPage;
-
-// abaixo o código do semestre passado
-// "use client";
-// import React, { useState } from "react";
-// import PublicarForm from "@/app/components/PublicarForm";
-// import FeedPost from "@/app/components/FeedPost";
-
-// interface Post {
-//   title: string;
-//   message: string;
-//   image?: File | null;
-// }
-
-// const FeedPage: React.FC = () => {
-//   const [posts, setPosts] = useState<Post[]>([]);
-
-//   const addPost = (post: Post) => {
-//     setPosts((prevPosts) => [post, ...prevPosts]);
-//   };
-
-//   return (
-//     <div className="container-fluid col-12 vstack gap-4 p-0">
-//       <div id="subdiv_publicar" className="p-3">
-//         <PublicarForm onPublish={addPost} />
-//       </div>
-//       <div className="mt-4" id="div_pub">
-//         {posts.length === 0 ? (
-//           <p className="text-center"></p>
-//         ) : (
-//           posts.map((post, index) => <FeedPost key={index} post={post} />)
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default FeedPage;
-
-//abaixo no novo código com backend:
-// "use client";
-// import React, { useState, useEffect } from "react";
-// import { Alert, Spinner } from "react-bootstrap";
-// import PublicarForm from "@/app/components/PublicarForm";
-// import FeedPost from "@/app/components/FeedPost";
-// import publicacaoService from "@/app/services/publicacaoService";
-// import {jwtDecode} from 'jwt-decode'; // <-- Importação do decodificador JWT
-
-// interface Post {
-//   _id: string;
-//   title: string;
-//   message: string;
-//   imageURL?: string;
-// }
-
-// // Interface para o payload do Token (o que você salvou no JWT no backend)
-// interface JwtPayload {
-//     id: string;
-//     email: string;
-//     role: string; // <-- O status do usuário
-//     iat: number;
-//     exp: number;
-// }
-
-// const FeedPage: React.FC = () => {
-//   const [posts, setPosts] = useState<Post[]>([]);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-
-//   const [userStatus, setUserStatus] = useState<string>(''); 
-//   // Statuses que têm permissão para publicar
-//   const ROLES_PUBLICADORES = ['admin', 'ong', 'ONG'];
-
-
-
-//   useEffect(() => {
-    
-//     // 1. Lógica para obter o STATUS a partir do TOKEN
-//     const token = localStorage.getItem('authToken'); // Assumindo que você salva o token como 'authToken'
-//     console.log("Token lido no mount:", token);
-
-//     if (token) {
-//         try {
-//             // Decodifica o token para acessar o payload
-//             const decoded = jwtDecode<JwtPayload>(token);
-//             console.log("Status decodificado:", decoded.role);
-            
-//             // Verifica se o token expirou (opcional, mas recomendado)
-//             if (decoded.exp * 1000 > Date.now()) {
-//                 setUserStatus(decoded.role); // <-- Extrai o status/role
-//             } else {
-//                 // Token expirado, limpa o status e força logout ou refresh
-//                 localStorage.removeItem('authToken');
-//                 setUserStatus('');
-//                 // Opcional: Redirecionar para login
-//             }
-
-//         } catch (e) {
-//             console.error("Erro ao decodificar token:", e);
-//             localStorage.removeItem('authToken');
-//         }
-//       }
-
-//   // 2. Carregar posts ao iniciar (GET)
-//     const fetchPosts = async () => {
-//       setIsLoading(true);
-//       setError(null); // Limpa erros anteriores ao tentar carregar novamente
-//       try {
-//         const data = await publicacaoService.listarPublicacao();
-        
-//         if (Array.isArray(data)) {
-//            // Inverte a ordem para mostrar os mais novos primeiro
-//           setPosts(data.reverse());
-//         } else {
-//           // Se a API retornar algo inesperado (ex: objeto vazio em vez de array)
-//           console.warn("API não retornou um array:", data);
-//           setPosts([]);
-//         }
-//       } catch (err) {
-//         console.error("Erro ao carregar feed:", err);
-//         setError("Erro ao carregar publicações. Verifique a conexão com o servidor.");
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-//     fetchPosts();
-//   }, []);
-
-//   // 3. Adicionar novo post à lista imediatamente após o sucesso do PublicarForm
-//   const addPost = (newPost: Post) => {
-//     setPosts((prevPosts) => [newPost, ...prevPosts]);
-//   };
-
-//   const canPublish = ROLES_PUBLICADORES.includes(userStatus);
-
-//   return (
-//     <div className="container-fluid col-12 vstack gap-4 p-0">
-//       {/* Exibe alertas de erro de conexão */}
-//       {error && (
-//         <Alert variant="danger" onClose={() => setError(null)} dismissible className="mt-3">
-//           {error}
-//         </Alert>
-//       )}
-
-//       {/* Formulário de Publicação ANTIGO
-//       <div id="subdiv_publicar" className="p-3">
-//         <PublicarForm onPublish={addPost} />
-//       </div> */}
-
-
-//       {/*------- Formulário de Publicação com Renderização Condicional -------*/}
-//       {canPublish && (
-//         <div id="subdiv_publicar" className="p-3">
-//             <PublicarForm onPublish={addPost} />
-//         </div>
-//       )}
-
-//       {/* Lista de Posts */}
-//       <div className="mt-4" id="div_pub">
-//         {isLoading ? (
-//           <div className="text-center p-5">
-//             <Spinner animation="border" variant="success" role="status">
-//               <span className="visually-hidden">Carregando...</span>
-//             </Spinner>
-//             <p className="text-muted mt-2">Carregando feed...</p>
-//           </div>
-//         ) : posts.length === 0 ? (
-//           <div className="text-center p-5 text-muted border rounded bg-light">
-//             <p className="mb-0 fs-5">Nenhuma publicação encontrada.</p>
-//             <small>Seja o primeiro a compartilhar algo!</small>
-//           </div>
-//         ) : (
-//           posts.map((post) => (
-//             // Usa _id ou um fallback para garantir uma key única
-//             <FeedPost key={post._id || Math.random().toString()} post={post} />
-//           ))
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default FeedPage;
-
-// /////////////////////////////
-// "use client";
-// import React, { useState, useEffect } from "react";
-// import { Alert, Spinner } from "react-bootstrap";
-// import { jwtDecode } from 'jwt-decode'; 
-// import AutoLogout from "../components/AutoLogout";
-// import PublicarForm from "../components/PublicarForm";
-// import FeedPost from "../components/FeedPost";
-// import publicacaoService from "@/app/services/publicacaoService";
-
-// // --- TIPOS ---
-// interface Post {
-//   _id: string;
-//   titulo: string;
-//   descricao: string;
-//   imagem?: string[];
-//   criadoPor?: {
-//     _id: string;
-//     nome: string;
-//     email: string;
-//   };
-//   createdAt?: string;
-// }
-
-// interface JwtPayload {
-//     id: string;
-//     email: string;
-//     role: string; 
-//     iat: number;
-//     exp: number;
-// }
-
-// const FeedPage: React.FC = () => {
-//   const [posts, setPosts] = useState<Post[]>([]);
-//   const [isLoading, setIsLoading] = useState(true);
-//   const [error, setError] = useState<string | null>(null);
-//   const [userStatus, setUserStatus] = useState<string>(''); 
-  
-//   const ROLES_PUBLICADORES = ['admin', 'ong'];
-
-//   useEffect(() => {
-//     // 1. VALIDAR TOKEN E ROLE
-//     const token = localStorage.getItem('authToken');
-    
-//     if (token) {
-//         try {
-//             const decoded = jwtDecode<JwtPayload>(token);
-            
-//             if (decoded.exp * 1000 > Date.now()) {
-//                 setUserStatus(decoded.role);
-//             } else {
-//                 console.warn("Token expirado.");
-//                 localStorage.removeItem('authToken');
-//                 setUserStatus('');
-//             }
-//         } catch (e) {
-//             console.error("Erro ao decodificar token:", e);
-//         }
-//       }
-
-//     // 2. CARREGAR POSTS
-//     const fetchPosts = async () => {
-//       setIsLoading(true);
-//       setError(null);
-//       try {
-//         const data = await publicacaoService.listarPublicacao();
-        
-//         if (Array.isArray(data)) {
-//            // O backend já deve trazer ordenado, mas por segurança:
-//           setPosts(data);
-//         } else {
-//           console.warn("API não retornou um array:", data);
-//           setPosts([]);
-//         }
-//       } catch (err) {
-//         console.error("Erro ao carregar feed:", err);
-//         setError("Não foi possível carregar as publicações.");
-//       } finally {
-//         setIsLoading(false);
-//       }
-//     };
-    
-//     fetchPosts();
-//   }, []);
-
-//   // Adiciona o post novo no topo da lista
-//   const addPost = (newPost: Post) => {
-//     setPosts((prevPosts) => [newPost, ...prevPosts]);
-//   };
-
-//   const canPublish = ROLES_PUBLICADORES.includes(userStatus);
-
-//   return (
-//     <div className="container-fluid col-12 p-0" style={{ maxWidth: '800px', margin: '0 auto' }}>
-//       <AutoLogout />
-//       {error && (
-//         <Alert variant="danger" onClose={() => setError(null)} dismissible className="mt-3">
-//           {error}
-//         </Alert>
-//       )}
-
-//       {/* Formulário só aparece para ONG/Admin */}
-//       {canPublish && (
-//         <div className="mb-4 mt-3">
-//             <PublicarForm onPublish={addPost} />
-//         </div>
-//       )}
-
-//       {/* Lista de Posts */}
-//       <div className="mt-4">
-//         {isLoading ? (
-//           <div className="text-center p-5">
-//             <Spinner animation="border" variant="success" role="status">
-//               <span className="visually-hidden">Carregando...</span>
-//             </Spinner>
-//             <p className="text-muted mt-2">Carregando feed...</p>
-//           </div>
-//         ) : posts.length === 0 ? (
-//           <div className="text-center p-5 text-muted border rounded bg-white shadow-sm">
-//             <p className="mb-0 fs-5">Nenhuma publicação encontrada.</p>
-//             <small>Seja o primeiro a compartilhar algo!</small>
-//           </div>
-//         ) : (
-//           <div className="vstack gap-4">
-//             {posts.map((post) => (
-//                // AQUI ESTÁ A CORREÇÃO: Chamando o componente FeedPost importado
-//                <FeedPost key={post._id || Math.random().toString()} post={post} />
-//             ))}
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-// export default FeedPage;
-
-//////////////////////////////////////////////
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Alert, Spinner, Container, Row, Col } from "react-bootstrap";
-import { jwtDecode } from 'jwt-decode'; 
+import { jwtDecode } from "jwt-decode";
 import AutoLogout from "../components/AutoLogout";
 import PublicarForm from "../components/PublicarForm";
 import FeedPost from "../components/FeedPost";
-import "@/app/CSS/feed.css"
+import "@/app/CSS/feed.css";
 import MenuLat from "../components/menu_lat/menu_lat";
 
-// Usando o serviço que o Menu Lateral usa
 import publicacaoService from "@/app/services/publicacaoService";
 import usuarioService from "@/app/services/usuarioService";
 
@@ -410,236 +20,249 @@ interface Post {
     _id: string;
     nome: string;
     email: string;
-    // O front fica preparado para receber isso, vindo ou não do back
-    assignedTo?: {
-        _id: string;
-        nomeFantasia?: string;
-        logo?: string;
-    } | string; // Pode vir string ou objeto
+    assignedTo?:
+      | {
+          _id: string;
+          nomeFantasia?: string;
+          logo?: string;
+        }
+      | string;
   };
   createdAt?: string;
 }
 
 interface JwtPayload {
-    id: string;
-    email: string;
-    role: string; 
-    iat: number;
-    exp: number;
+  id: string;
+  email: string;
+  role: string;
+  iat: number;
+  exp: number;
 }
+
+const POSTS_POR_PAGINA = 10;
 
 const FeedPage: React.FC = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const [userRole, setUserRole] = useState<string>(''); 
-  const [userId, setUserId] = useState<string>(''); 
-  
-  // Estado para guardar o Avatar e Nome da ONG do usuário logado
-  const [currentUserAvatar, setCurrentUserAvatar] = useState<string | undefined>(undefined);
-  // Guardamos também o nome fantasia para usar na "UI Otimista" ao postar
-  const [currentOngName, setCurrentOngName] = useState<string | undefined>(undefined);
-  
-  const ROLES_PUBLICADORES = ['admin', 'ong'];
 
-  // --- LÓGICA IMPORTADA DO MENU LATERAL ---
+  const [userRole, setUserRole] = useState<string>("");
+  const [userId, setUserId] = useState<string>("");
+  const [currentUserAvatar, setCurrentUserAvatar] = useState<string | undefined>(undefined);
+  const [currentOngName, setCurrentOngName] = useState<string | undefined>(undefined);
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const isFetchingRef = useRef(false);
+
+  const ROLES_PUBLICADORES = ["admin", "ong"];
+
   const fetchUserData = async (id: string) => {
     try {
-        // Busca exatamente como o Menu faz
-        const data = await usuarioService.buscarPorId(id);
-        const usuario = data.usuario || data; 
+      const data = await usuarioService.buscarPorId(id);
+      const usuario = data.usuario || data;
 
-        // Lógica do Menu: Se for ONG e tiver assignedTo
-        if (usuario.status === "ong" && usuario.assignedTo) {
-             // Se assignedTo já veio populado (que é o caso do Menu)
-             if (typeof usuario.assignedTo === 'object') {
-                 if (usuario.assignedTo.logo) setCurrentUserAvatar(usuario.assignedTo.logo);
-                 if (usuario.assignedTo.nomeFantasia) setCurrentOngName(usuario.assignedTo.nomeFantasia);
-                 return;
-             }
+      if (usuario.status === "ong" && usuario.assignedTo) {
+        if (typeof usuario.assignedTo === "object") {
+          if (usuario.assignedTo.logo) setCurrentUserAvatar(usuario.assignedTo.logo);
+          if (usuario.assignedTo.nomeFantasia) setCurrentOngName(usuario.assignedTo.nomeFantasia);
+          return;
         }
+      }
 
-        // Se não for ONG ou não tiver logo, usa avatar do user (mesmo fallback do Menu)
-        if (usuario.avatar) {
-            setCurrentUserAvatar(usuario.avatar);
-        }
-
+      if (usuario.avatar) {
+        setCurrentUserAvatar(usuario.avatar);
+      }
     } catch (err) {
-        console.error("Erro ao carregar perfil:", err);
+      console.error("Erro ao carregar perfil:", err);
     }
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-        try {
-            const decoded = jwtDecode<JwtPayload>(token);
-            if (decoded.exp * 1000 > Date.now()) {
-                setUserRole(decoded.role);
-                setUserId(decoded.id);
-                fetchUserData(decoded.id);
-            } else {
-                localStorage.removeItem('authToken');
-            }
-        } catch (e) {
-            console.error(e);
-        }
-      }
-    carregarPosts();
-  }, []);
+  const carregarPosts = useCallback(async (paginaAlvo: number) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
 
-  const carregarPosts = async () => {
-    setIsLoading(true);
+    if (paginaAlvo === 1) {
+      setIsLoading(true);
+    } else {
+      setIsFetchingMore(true);
+    }
+
     try {
-      const data = await publicacaoService.listarPublicacao();
-      if (Array.isArray(data)) setPosts(data);
-      else setPosts([]);
+      const { publicacoes, hasMore: temMais } = await publicacaoService.listarPublicacao(
+        paginaAlvo,
+        POSTS_POR_PAGINA
+      );
+
+      setPosts((prev) => {
+        if (paginaAlvo === 1) return publicacoes;
+        const idsExistentes = new Set(prev.map((p) => p._id));
+        const novosUnicos = publicacoes.filter((p: Post) => !idsExistentes.has(p._id));
+        return [...prev, ...novosUnicos];
+      });
+
+      setHasMore(temMais);
+      setPage(paginaAlvo);
     } catch (err) {
       setError("Não foi possível carregar as publicações.");
     } finally {
       setIsLoading(false);
+      setIsFetchingMore(false);
+      isFetchingRef.current = false;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      try {
+        const decoded = jwtDecode<JwtPayload>(token);
+        if (decoded.exp * 1000 > Date.now()) {
+          setUserRole(decoded.role);
+          setUserId(decoded.id);
+          fetchUserData(decoded.id);
+        } else {
+          localStorage.removeItem("authToken");
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    carregarPosts(1);
+  }, [carregarPosts]);
+
+  // Observa o fim da lista para carregar as próximas 10 publicações
+  useEffect(() => {
+    if (isLoading || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !isFetchingRef.current) {
+          carregarPosts(page + 1);
+        }
+      },
+      { rootMargin: "200px" }
+    );
+
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) {
+      observer.observe(currentSentinel);
+    }
+
+    return () => {
+      if (currentSentinel) observer.unobserve(currentSentinel);
+      observer.disconnect();
+    };
+  }, [isLoading, hasMore, page, carregarPosts]);
 
   const handleCreatePost = async (dadosForm: { title: string; message: string; image?: File | null }) => {
     try {
-        if (!userId) return alert("Faça login novamente.");
+      if (!userId) return alert("Faça login novamente.");
 
-        const formData = new FormData();
-        formData.append('titulo', dadosForm.title);
-        formData.append('descricao', dadosForm.message);
-        formData.append('criadoPor', userId);
-        if (dadosForm.image) formData.append('image', dadosForm.image);
+      const formData = new FormData();
+      formData.append("titulo", dadosForm.title);
+      formData.append("descricao", dadosForm.message);
+      formData.append("criadoPor", userId);
+      if (dadosForm.image) formData.append("image", dadosForm.image);
 
-        const novaPublicacao = await publicacaoService.cadastrarPublicacao(formData);
-        
-        // --- TRUQUE VISUAL (Optimistic UI) ---
-        // Como não mexemos no backend para ele devolver o populate na hora,
-        // nós "montamos" o objeto visualmente com os dados que já temos do Menu Lateral (currentOngName e Avatar)
-        if (currentUserAvatar && novaPublicacao.criadoPor) {
-             // Forçamos a estrutura visual para aparecer bonito na hora
-             novaPublicacao.criadoPor.assignedTo = { 
-                 logo: currentUserAvatar, 
-                 nomeFantasia: currentOngName || 'Minha ONG', 
-                 _id: 'temp' 
-             };
-        }
+      const novaPublicacao = await publicacaoService.cadastrarPublicacao(formData);
 
-        setPosts((prev) => [novaPublicacao, ...prev]);
+      if (currentUserAvatar && novaPublicacao.criadoPor) {
+        novaPublicacao.criadoPor.assignedTo = {
+          logo: currentUserAvatar,
+          nomeFantasia: currentOngName || "Minha ONG",
+          _id: "temp",
+        };
+      }
 
+      setPosts((prev) => [novaPublicacao, ...prev]);
     } catch (err: any) {
-        console.error(err);
-        alert(`Falha ao publicar.`);
+      console.error(err);
+      alert("Falha ao publicar.");
     }
   };
 
   const handleDeletePost = async (id: string) => {
     if (!window.confirm("Excluir publicação?")) return;
     try {
-        await publicacaoService.deletarPublicacao(id);
-        setPosts((prev) => prev.filter(post => post._id !== id));
+      await publicacaoService.deletarPublicacao(id);
+      setPosts((prev) => prev.filter((post) => post._id !== id));
     } catch (err) {
-        alert("Erro ao excluir.");
+      alert("Erro ao excluir.");
     }
   };
 
   const canPublish = ROLES_PUBLICADORES.includes(userRole);
 
-//   return (
-//     <div className="container-fluid col-12 p-0" style={{ maxWidth: '800px', margin: '0 auto' }}>
-//       <AutoLogout />
-//       {error && <Alert variant="danger" onClose={() => setError(null)} dismissible className="mt-3">{error}</Alert>}
-
-//       {canPublish && (
-//         <div className="pr-3 pl-3" id="div_feed">
-//             <PublicarForm 
-//                 onPublish={handleCreatePost} 
-//                 userAvatar={currentUserAvatar} 
-//             />
-//         </div>
-//       )}
-
-//       <div className="mt-4">
-//         {isLoading ? (
-//           <div className="text-center p-5"><Spinner animation="border" variant="success" /></div>
-//         ) : posts.length === 0 ? (
-//           <div className="text-center p-5 bg-white border rounded">Nenhuma publicação.</div>
-//         ) : (
-//           <div className="vstack gap-4">
-//             {posts.map((post) => (
-//                <FeedPost 
-//                  key={post._id} 
-//                  post={post} 
-//                  currentUserId={userId} 
-//                  onDelete={handleDeletePost} 
-//                />
-//             ))}
-//           </div>
-//         )}
-//       </div>
-//     </div>
-//   );
-// };
-
-return (
+  return (
     <div className="feed-container-wrapper">
       <AutoLogout />
-      
+
       <Container>
         <Row className="justify-content-center gx-5">
-            
-            {/* MENU LATERAL */}
-            {/* Mudamos de 'd-lg-block' para 'd-md-block' para aparecer em mais telas */}
-            <Col md={4} lg={3} className="d-none d-md-block">
-                <div style={{ position: 'sticky', top: '100px' }}>
-                    <MenuLat />
+          {/* MENU LATERAL */}
+          <Col md={4} lg={3} className="d-none d-md-block">
+            <div style={{ position: "sticky", top: "100px" }}>
+              <MenuLat />
+            </div>
+          </Col>
+
+          {/* FEED */}
+          <Col xs={12} md={8} lg={6}>
+            {error && (
+              <Alert variant="danger" onClose={() => setError(null)} dismissible>
+                {error}
+              </Alert>
+            )}
+
+            {canPublish && (
+              <div className="mb-4" id="div_feed">
+                <PublicarForm onPublish={handleCreatePost} />
+              </div>
+            )}
+
+            <div className="mt-4">
+              {isLoading ? (
+                <div className="text-center p-5">
+                  <Spinner animation="border" variant="success" />
                 </div>
-            </Col>
+              ) : posts.length === 0 ? (
+                <div className="text-center p-5 bg-white border rounded">
+                  Nenhuma publicação encontrada.
+                </div>
+              ) : (
+                <>
+                  <div className="vstack gap-4">
+                    {posts.map((post) => (
+                      <FeedPost
+                        key={post._id}
+                        post={post}
+                        currentUserId={userId}
+                        onDelete={handleDeletePost}
+                      />
+                    ))}
+                  </div>
 
-            {/* FEED */}
-            {/* Ocupa 12 (tudo) no celular, e 8 ou 6 no PC */}
-            <Col xs={12} md={8} lg={6}>
-                {error && <Alert variant="danger" onClose={() => setError(null)} dismissible>{error}</Alert>}
-
-                {canPublish && (
-                    <div className="mb-4" id="div_feed">
-                        {/* PublicarForm recebe o avatar automaticamente agora */}
-                        <PublicarForm 
-                            onPublish={handleCreatePost} 
-                        />
-                    </div>
-                )}
-
-                <div className="mt-4">
-                    {isLoading ? (
-                    <div className="text-center p-5"><Spinner animation="border" variant="success" /></div>
-                    ) : posts.length === 0 ? (
-                    <div className="text-center p-5 bg-white border rounded">Nenhuma publicação encontrada.</div>
-                    ) : (
-                    <div className="vstack gap-4">
-                        {posts.map((post) => (
-                        <FeedPost 
-                            key={post._id} 
-                            post={post} 
-                            currentUserId={userId} 
-                            onDelete={handleDeletePost} 
-                        />
-                        ))}
-                    </div>
+                  {/* Elemento sentinela para disparar a próxima página */}
+                  <div ref={sentinelRef} className="py-4 text-center">
+                    {isFetchingMore && <Spinner animation="border" variant="success" size="sm" />}
+                    {!hasMore && posts.length > 0 && (
+                      <small className="text-muted">Você chegou ao fim das publicações.</small>
                     )}
-                </div>
-            </Col>
+                  </div>
+                </>
+              )}
+            </div>
+          </Col>
 
-            {/* COLUNA DIREITA (Vazia) */}
-            {/* Só aparece em telas muito grandes (lg) para centralizar */}
-            <Col lg={3} className="d-none d-lg-block">
-                {/* Espaço para widgets futuros */}
-            </Col>
-
+          {/* COLUNA DIREITA (Vazia) */}
+          <Col lg={3} className="d-none d-lg-block" />
         </Row>
       </Container>
     </div>
   );
-}
+};
+
 export default FeedPage;
